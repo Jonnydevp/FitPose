@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.egg-info/
+
+# Data and outputs
+data/*
+!data/.gitkeep
+output/*
+!output/.gitkeep
+
+# Jupyter
+*.ipynb_checkpoints/
+
+# OS files
+.DS_Store
