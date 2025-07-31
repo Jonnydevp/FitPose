@@ -19,3 +19,8 @@ output/*
 
 # OS files
 .DS_Store
+
+src/cv/video_datasets
+src/cv/output_data.json
+src/cv/output_data.csv
+*.idea
