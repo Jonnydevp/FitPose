@@ -19,8 +19,7 @@ def calculate_angle(a, b, c):
 if __name__ == "__main__":
     output_prefix = "output_data"
     side = 'left'
-    base_dir = r"C:\Users\hehe\FitPose\src\cv\video_datasets"
-
+    base_dir = "your path"
     all_json_frames = []
     all_csv_rows = []
     global_frame_id = 0
@@ -37,7 +36,7 @@ if __name__ == "__main__":
 
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
-            print(f"Ошибка открытия видео: {video_path}")
+            print(f"Error opening video: {video_path}")
             continue
 
         fps = cap.get(cv2.CAP_PROP_FPS)
@@ -47,7 +46,7 @@ if __name__ == "__main__":
 
         prev_landmarks = None
 
-        for frame_id in tqdm(range(frame_count), desc=f"Обработка {video_path}"):
+        for frame_id in tqdm(range(frame_count), desc=f"Processing {video_path}"):
             ret, frame = cap.read()
             if not ret:
                 break
