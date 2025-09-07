@@ -1,8 +1,8 @@
 # 🚀 Deployment Guide
 
-## Frontend Deployment Instructions
+## 🎯 One-URL Fullstack Deployment (Recommended)
 
-### Option 1: Manual Vercel Deployment (Recommended)
+### Option 1: Vercel Unified Deployment
 
 1. **Visit [vercel.com](https://vercel.com)** and sign in with your GitHub account
 
@@ -17,9 +17,35 @@
    - Build Command: `npm run build`
    - Output Directory: `dist`
 
-4. **Deploy** - Vercel will automatically build and deploy your frontend
+4. **Deploy** - Vercel will automatically:
+   - Build and host your React frontend
+   - Proxy `/api/*` requests to Railway backend
+   - Provide unified access on one domain
 
-### Option 2: Local Development Server
+**Result**: Your app will be available at one URL with both frontend and backend working seamlessly!
+
+### How it works:
+- **Frontend**: Served by Vercel
+- **API calls**: Automatically proxied to Railway backend
+- **Single domain**: Everything accessible from your Vercel URL
+
+---
+
+## Alternative Deployment Options
+
+### Option 2: Separate Deployments
+
+### Option 2: Separate Deployments
+
+**Frontend (Vercel):**
+1. Visit [vercel.com](https://vercel.com)
+2. Import repository and select `src/frontend` folder
+3. Deploy with Vite preset
+
+**Backend (Railway):**
+- Already deployed at `https://web-production-92856.up.railway.app`
+
+### Option 3: Local Development Server
 
 ```bash
 cd src/frontend
@@ -29,7 +55,7 @@ python3 serve.py
 
 Visit http://localhost:8080
 
-### Option 3: Netlify Deployment
+### Option 4: Netlify Deployment
 
 1. **Visit [netlify.com](https://netlify.com)**
 2. **Drag and drop** the `src/frontend/dist` folder
@@ -38,8 +64,19 @@ Visit http://localhost:8080
 ## Current Status ✅
 
 - **Backend**: Deployed to Railway at `https://web-production-92856.up.railway.app`
-- **Frontend**: Ready for deployment (built and configured)
-- **API Integration**: Frontend configured to use production backend
+- **Frontend**: Ready for unified deployment with API proxy configuration
+- **Single URL**: Configured for seamless fullstack deployment on Vercel
+- **API Integration**: Frontend uses relative URLs, proxied by Vercel to Railway
+
+## Unified Deployment Architecture
+
+```
+Your-Vercel-Domain.vercel.app
+├── / (React Frontend)
+├── /api/* (Proxied to Railway Backend)
+├── /health (Proxied to Railway)
+└── /docs (Proxied to Railway API docs)
+```
 
 ## Environment Variables
 
