@@ -6,8 +6,8 @@ try:
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
 except ImportError as e:
-    print(f"❌ Missing dependencies: {e}")
-    print("📦 Run: pip install -r requirements.txt")
+    print(f"Missing dependencies: {e}")
+    print("Run: pip install -r requirements.txt")
     exit(1)
 
 from src.backend.core.config import settings
