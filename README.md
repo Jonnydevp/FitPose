@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # FitPose - AI-Powered Exercise Analysis
 
 FitPose analyzes your workout videos using computer vision and artificial intelligence, providing personalized feedback on exercise technique.
@@ -393,3 +394,5 @@ If you have questions or issues:
 1. Check [Issues](https://github.com/Jonnydevp/FitPose/issues)
 2. Create new Issue
 3. Contact development team
+=======
+>>>>>>> main
