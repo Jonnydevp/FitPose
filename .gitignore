@@ -8,19 +8,53 @@ env/
 venv/
 .venv/
 *.egg-info/
+build/
+dist/
 
 # Environment variables
 .env
 .env.local
+.env.production
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# History and backup files
+.history/
+*.bak
+*.backup
+
+# Temporary files
+*.tmp
+*.temp
+temp/
 
 # Data and outputs
 data/*
 !data/.gitkeep
 output/*
 !output/.gitkeep
-src/cv/video_datasets/
-src/cv/output_data.json
-src/cv/output_data.csv
+uploads/
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Railway
+.railway/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -42,6 +76,7 @@ lerna-debug.log*
 
 # OS files
 .DS_Store
+Thumbs.db
 
 # IDE / Editor
 .vscode/*
@@ -49,3 +84,36 @@ lerna-debug.log*
 .idea/
 *.swp
 *.swo
+*~
+
+# Editor history
+.history/
+.vscode-history/
+
+# Test coverage
+coverage/
+.coverage
+.nyc_output
+
+# Deployment
+deploy.log
+*.swo
+
+# Docker and deployment
+docker-data/
+/logs/
+/temp/
+/uploads/
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+# ML models
+*.pkl
+*.joblib
+*.h5
+*.pb
