@@ -26,8 +26,16 @@ class Settings:
     openai_model: str = os.getenv("AI_MODEL", "gpt-4")
     ai_timeout_seconds: int = int(os.getenv("AI_TIMEOUT_SECONDS", "30"))
     
-    # CORS
-    cors_origins: List[str] = os.getenv("CORS_ORIGINS", "*").split(",")
+    # CORS - Allow Vercel domains and localhost
+    cors_origins: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:5173", 
+        "http://localhost:8080",
+        "https://fit-pose.vercel.app",
+        "https://fit-pose-git-main-jonnydevps-projects.vercel.app",
+        "https://fit-pose-7x5lbb2vd-jonnydevps-projects.vercel.app",
+        "*"  # Allow all origins for testing
+    ]
     
     # Files
     max_file_size_mb: int = int(os.getenv("MAX_FILE_SIZE_MB", "50"))
