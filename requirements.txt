@@ -1,8 +1,28 @@
-opencv-python
-numpy
-pandas
-mediapipe
-torch
-torchvision
-torchaudio
-tensorflow
+# FastAPI and web server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# File handling  
+python-multipart==0.0.6
+aiofiles==23.2.1
+
+# Configuration
+python-dotenv==1.0.0
+
+# Computer Vision
+opencv-python-headless==4.8.1.78
+mediapipe==0.10.7
+numpy==1.24.3
+
+# Data Processing
+pandas==2.0.3
+scipy==1.11.4
+
+# Image processing
+Pillow==10.0.1
+
+# HTTP client
+requests==2.31.0
+
+# Data validation
+pydantic==2.4.2
