@@ -1,21 +1,83 @@
-# 🚀 FitPose Deployment Guide
+# FitPose Deployment Guide
 
-This guide covers deployment of FitPose to production environments using Railway (backend) and Vercel (frontend).
+Deploy FitPose to production using Railway (backend) and Vercel (frontend).
 
-## 📋 Prerequisites
+## Prerequisites
 
 - GitHub account with FitPose repository
-- Railway account (for backend deployment)
-- Vercel account (for frontend deployment)
+- Railway account
+- Vercel account  
 - OpenAI API key
 
-## 🚂 Backend Deployment (Railway)
+## Backend Deployment (Railway)
 
-### Step 1: Prepare Railway Configuration
+### 1. Automatic Deployment
 
-The project includes `railway.toml` and `nixpacks.toml` for automatic deployment:
+1. **Connect Repository**
+   - Go to [Railway](https://railway.app)
+   - Click "Deploy from GitHub repo"
+   - Select FitPose repository
 
-**railway.toml**
+2. **Environment Variables**
+   ```env
+   OPENAI_API_KEY=your_openai_api_key_here
+   ENVIRONMENT=production
+   ```
+
+3. **Deploy**
+   - Railway auto-builds using `railway.toml` and `nixpacks.toml`
+   - Monitor deployment logs
+   - Note your Railway URL (e.g., `web-production-XXXXX.up.railway.app`)
+
+### 2. Manual Deployment
+
+Use the included script:
+```bash
+chmod +x deploy-railway.sh
+./deploy-railway.sh
+```
+
+### 3. Verify Deployment
+
+```bash
+curl https://your-railway-url.up.railway.app/health
+```
+
+## Frontend Deployment (Vercel)
+
+### 1. Automatic Deployment
+
+1. **Connect Repository**
+   - Go to [Vercel](https://vercel.com)
+   - Import FitPose repository
+
+2. **Build Settings**
+   - Framework: `Vite`
+   - Root Directory: `src/frontend`
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+
+3. **Environment Variables** (Optional)
+   ```env
+   VITE_API_URL=https://your-railway-url.up.railway.app
+   ```
+
+### 2. Configuration
+
+The included `vercel.json` handles routing automatically.
+
+### 3. Update API URL
+
+In `src/frontend/src/App.jsx`, update the API URL:
+```javascript
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://your-railway-url.up.railway.app' 
+  : 'http://localhost:8001';
+```
+
+## Configuration Files
+
+### railway.toml
 ```toml
 [build]
 builder = "NIXPACKS"
@@ -23,144 +85,39 @@ builder = "NIXPACKS"
 [deploy]
 healthcheckPath = "/health"
 healthcheckTimeout = 300
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 10
 ```
 
-**nixpacks.toml**
+### nixpacks.toml  
 ```toml
 [phases.setup]
-cmds = [
-    "apt-get update",
-    "apt-get install -y libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1"
-]
+cmds = ["apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0"]
 
 [phases.install]
 cmds = ["pip install -r requirements.txt"]
-
-[phases.build]
-cmds = ["echo 'Build complete'"]
 
 [start]
 cmd = "uvicorn main:app --host 0.0.0.0 --port $PORT"
 ```
 
-### Step 2: Deploy to Railway
-
-1. **Connect Repository**
-   - Go to [Railway](https://railway.app)
-   - Click "Deploy from GitHub repo"
-   - Select your FitPose repository
-
-2. **Configure Environment Variables**
-   ```env
-   OPENAI_API_KEY=your_openai_api_key_here
-   ENVIRONMENT=production
-   PORT=8000
-   ```
-
-3. **Deploy**
-   - Railway will automatically build and deploy
-   - Monitor logs for successful deployment
-   - Note your Railway app URL (e.g., `web-production-92856.up.railway.app`)
-
-### Step 3: Verify Backend Deployment
-
-Test the deployed backend:
-```bash
-# Health check
-curl https://web-production-92856.up.railway.app/health
-
-# API documentation
-curl https://web-production-92856.up.railway.app/docs
-```
-
-## ⚡ Frontend Deployment (Vercel)
-
-### Step 1: Prepare Vercel Configuration
-
-The project includes `vercel.json` for deployment configuration:
-
-**vercel.json**
+### vercel.json
 ```json
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "src/frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/src/frontend/dist/$1"
-    }
-  ],
-  "functions": {
-    "src/frontend/dist/**": {
-      "includeFiles": "src/frontend/dist/**"
-    }
-  }
+  "builds": [{"src": "src/frontend/package.json", "use": "@vercel/static-build"}],
+  "routes": [{"src": "/(.*)", "dest": "/src/frontend/dist/$1"}]
 }
 ```
 
-### Step 2: Configure Frontend Environment
+## CORS Configuration
 
-Update `src/frontend/src/App.jsx` to use production API URL:
-```javascript
-const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://web-production-92856.up.railway.app'
-  : 'http://localhost:8001';
-```
-
-### Step 3: Deploy to Vercel
-
-1. **Connect Repository**
-   - Go to [Vercel](https://vercel.com)
-   - Click "Import Git Repository"
-   - Select your FitPose repository
-
-2. **Configure Build Settings**
-   - Framework Preset: `Vite`
-   - Root Directory: `src/frontend`
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-   - Install Command: `npm install`
-
-3. **Environment Variables** (if needed)
-   ```env
-   VITE_API_URL=https://web-production-92856.up.railway.app
-   ```
-
-4. **Deploy**
-   - Vercel will automatically build and deploy
-   - Note your Vercel app URL (e.g., `fit-pose.vercel.app`)
-
-### Step 4: Verify Frontend Deployment
-
-Visit your Vercel URL and test:
-- Video upload functionality
-- API communication with Railway backend
-- Exercise analysis workflow
-
-## 🔗 Cross-Origin Configuration
-
-### Backend CORS Setup
-
-Ensure `main.py` includes proper CORS configuration:
+In `main.py`, ensure CORS allows your frontend domain:
 ```python
-from fastapi.middleware.cors import CORSMiddleware
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",           # Local development
-        "https://fit-pose.vercel.app",     # Production frontend
-        "https://*.vercel.app",            # Vercel preview deployments
+        "http://localhost:5173",
+        "https://your-app.vercel.app",
+        "https://*.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -168,156 +125,71 @@ app.add_middleware(
 )
 ```
 
-## 🔐 Environment Variables
+## Environment Variables
 
-### Production Environment Variables
-
-**Railway (Backend)**
+### Production
 ```env
-OPENAI_API_KEY=sk-your-openai-key-here
+# Railway (Backend)
+OPENAI_API_KEY=your_openai_api_key_here
 ENVIRONMENT=production
 PORT=8000
-FRONTEND_URL=https://fit-pose.vercel.app
+
+# Vercel (Frontend) - Optional
+VITE_API_URL=https://your-railway-url.up.railway.app
 ```
 
-**Vercel (Frontend)** - Optional
-```env
-VITE_API_URL=https://web-production-92856.up.railway.app
+## Health Checks
+
+### Automated Health Check
+```bash
+chmod +x health-check.sh
+./health-check.sh https://your-railway-url.up.railway.app
 ```
 
-## 📊 Monitoring and Health Checks
+### Manual Testing
+```bash
+# Test backend
+curl https://your-railway-url.up.railway.app/health
 
-### Railway Health Check
-Railway automatically monitors the `/health` endpoint:
-```python
-@app.get("/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
-        "version": "1.0.0"
-    }
+# Test API docs
+curl https://your-railway-url.up.railway.app/docs
 ```
 
-### Vercel Analytics
-Enable Vercel Analytics for frontend monitoring:
-1. Go to Vercel dashboard
-2. Select your project
-3. Navigate to Analytics tab
-4. Enable analytics
+## Troubleshooting
 
-## 🚀 CI/CD Pipeline
+### Common Issues
 
-### GitHub Actions Workflow
+**Railway Build Fails**
+- Check `nixpacks.toml` system dependencies
+- Verify `requirements.txt` includes all packages
+- Monitor Railway build logs
 
-The project includes `.github/workflows/ci.yml`:
-```yaml
-name: CI/CD Pipeline
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run tests
-        run: python -m pytest
-      
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Deploy to Railway
-        run: echo "Deploying to Railway..."
-      - name: Deploy to Vercel
-        run: echo "Deploying to Vercel..."
-```
-
-## 🔧 Troubleshooting
-
-### Common Deployment Issues
-
-**Railway Deployment Fails**
-1. Check `nixpacks.toml` system dependencies
-2. Verify `requirements.txt` is complete
-3. Check environment variables are set
-4. Monitor Railway logs for specific errors
-
-**Vercel Build Fails**
-1. Ensure `package.json` is in `src/frontend/`
-2. Check build commands in Vercel settings
-3. Verify no import errors in React components
-4. Check Vercel build logs
+**Vercel Build Fails**  
+- Ensure `package.json` is in `src/frontend/`
+- Check build commands in Vercel settings
+- Verify no import errors
 
 **CORS Errors**
-1. Update CORS origins in `main.py`
-2. Include your Vercel domain
-3. Check frontend API URL configuration
-4. Test with browser dev tools
+- Update CORS origins in `main.py`
+- Include your Vercel domain
+- Check frontend API URL configuration
 
 **API Connection Issues**
-1. Verify Railway backend is running (`/health`)
-2. Check frontend API URL configuration
-3. Test API endpoints directly
-4. Monitor network requests in browser
+- Verify Railway backend is running (`/health`)
+- Check frontend API URL matches Railway URL
+- Test API endpoints directly
 
-### Performance Optimization
+## Production URLs
 
-**Backend (Railway)**
-- Use gunicorn for production WSGI server
-- Enable request compression
-- Implement caching for analysis results
-- Monitor memory usage
+Once deployed:
+- **Frontend**: `https://your-app.vercel.app`  
+- **Backend**: `https://your-railway-url.up.railway.app`
+- **API Docs**: `https://your-railway-url.up.railway.app/docs`
 
-**Frontend (Vercel)**
-- Enable Vercel Edge Functions if needed
-- Implement code splitting
-- Optimize video file handling
-- Use Vercel Image Optimization
+## CI/CD
 
-## 📈 Scaling Considerations
-
-### Horizontal Scaling
-- Railway supports automatic scaling
-- Consider database addition for user data
-- Implement Redis for caching
-- Add load balancing for high traffic
-
-### Performance Monitoring
-- Railway provides built-in metrics
-- Vercel Analytics for frontend performance
-- Consider APM tools for detailed monitoring
-- Set up alerts for downtime
-
-## 🆘 Support and Maintenance
-
-### Regular Maintenance
-- Monitor dependency security updates
-- Update OpenAI API integration
-- Check Railway and Vercel service updates
-- Review and update documentation
-
-### Backup Strategy
-- GitHub repository as source backup
-- Export environment variables
-- Document deployment configurations
-- Maintain deployment runbooks
+The project includes GitHub Actions workflow in `.github/workflows/ci-cd.yml` for automated testing and deployment.
 
 ---
 
-**Live Endpoints**:
-- Frontend: https://fit-pose.vercel.app
-- Backend: https://web-production-92856.up.railway.app
-- API Docs: https://web-production-92856.up.railway.app/docs
+For detailed configuration, see the included deployment scripts and configuration files.
