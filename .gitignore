@@ -1,0 +1,122 @@
+<<<<<<< HEAD
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+build/
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# History and backup files
+.history/
+*.bak
+*.backup
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+
+# Data and outputs
+data/*
+!data/.gitkeep
+output/*
+!output/.gitkeep
+uploads/
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Railway
+.railway/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Node.js / Frontend
+node_modules/
+dist/
+dist-ssr/
+.vite/
+.eslintcache
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Editor history
+.history/
+.vscode-history/
+
+# Test coverage
+coverage/
+.coverage
+.nyc_output
+
+# Deployment
+deploy.log
+*.swo
+
+# Docker and deployment
+docker-data/
+/logs/
+/temp/
+/uploads/
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+# ML models
+*.pkl
+*.joblib
+*.h5
+*.pb
+=======
+>>>>>>> main
