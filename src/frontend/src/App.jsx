@@ -14,9 +14,9 @@ const FitPoseApp = () => {
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
-  // API URL - Railway URL for production
+  // API URL - Use relative URLs for Vercel proxy to Railway
   const API_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://web-production-92856.up.railway.app' 
+    ? '' 
     : 'http://localhost:8001';
 
   const exercises = [

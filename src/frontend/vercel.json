@@ -6,6 +6,18 @@
   "installCommand": "npm install",
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://web-production-92856.up.railway.app/$1"
+    },
+    {
+      "source": "/health",
+      "destination": "https://web-production-92856.up.railway.app/health"
+    },
+    {
+      "source": "/docs",
+      "destination": "https://web-production-92856.up.railway.app/docs"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
