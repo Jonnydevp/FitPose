@@ -16,7 +16,7 @@ const FitPoseApp = () => {
 
   // API URL - Railway URL for production
   const API_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://your-railway-app.railway.app' 
+    ? 'https://web-production-92856.up.railway.app' 
     : 'http://localhost:8001';
 
   const exercises = [
@@ -27,7 +27,6 @@ const FitPoseApp = () => {
     'Lunges',
     'Deadlifts',
     'Pull-ups',
-    'Mountain Climbers'
   ];
 
   const handleFileSelect = async (event) => {
