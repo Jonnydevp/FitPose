@@ -59,7 +59,7 @@ const ContactPage = () => (
                   </div>
                   <div>
                     <p className="text-white font-semibold">Email</p>
-                    <p className="text-gray-300">hello@fitpose.ai</p>
+                    <p className="text-gray-300">walacues@gmail.com</p>
                   </div>
                 </div>
                 
@@ -69,7 +69,7 @@ const ContactPage = () => (
                   </div>
                   <div>
                     <p className="text-white font-semibold">Phone</p>
-                    <p className="text-gray-300">+1 (555) 123-4567</p>
+                    <p className="text-gray-300">+79939632932</p>
                   </div>
                 </div>
                 
@@ -79,7 +79,7 @@ const ContactPage = () => (
                   </div>
                   <div>
                     <p className="text-white font-semibold">Address</p>
-                    <p className="text-gray-300">123 Fitness Street<br />Tech City, TC 12345</p>
+                    <p className="text-gray-300">Saint Petersburg, Peterhof<br />Russia</p>
                   </div>
                 </div>
               </div>
