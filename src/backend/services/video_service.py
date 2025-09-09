@@ -72,9 +72,32 @@ class VideoService:
         
         return temp_path
     
-    async def process_video(self, file: UploadFile) -> Optional[Dict[str, Any]]:
+    def _normalize_exercise(self, name: Optional[str]) -> Optional[str]:
+        if not name:
+            return None
+        key = name.strip().lower().replace(" ", "").replace("-", "")
+        aliases = {
+            "pullups": "pullup",
+            "pullup": "pullup",
+            "chinups": "pullup",
+            "deadlift": "deadlift",
+            "deadlifts": "deadlift",
+            "squat": "squat",
+            "squats": "squat",
+            "pushup": "pushup",
+            "pushups": "pushup",
+            "burpee": "burpee",
+            "burpees": "burpee",
+            "lunge": "lunge",
+            "lunges": "lunge",
+            "plank": "plank",
+        }
+        return aliases.get(key, key)
+
+    async def process_video(self, file: UploadFile, expected_exercise: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """Complete video file processing"""
         temp_path = None
+        expected_norm = self._normalize_exercise(expected_exercise)
         
         try:
             # Validate file
@@ -84,12 +107,20 @@ class VideoService:
             temp_path = await self.save_temp_video(file)
             
             # Process video
-            result = await self.video_processor.process_video(temp_path)
+            result = await self.video_processor.process_video(temp_path, expected_exercise=expected_norm)
             
             if not result:
                 raise HTTPException(
                     status_code=422,
                     detail="Failed to process video. Please check video quality and content."
+                )
+            
+            # If client provided expected exercise, validate mismatch
+            detected = result.get('movement_analysis', {}).get('exercise_type')
+            if expected_norm and detected and expected_norm != detected:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Exercise mismatch: expected '{expected_norm}', detected '{detected}'"
                 )
             
             return result
