@@ -1,0 +1,19 @@
+.git
+.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Frontend sources and build artefacts not needed in backend image
+src/frontend/
+node_modules/
+dist/
+
+# Misc
+*.log
+.vscode/
+.idea/
+coverage/
+.DS_Store
+
