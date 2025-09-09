@@ -112,6 +112,12 @@ const HomePage = ({
                     <p className="text-red-300">{error}</p>
                   ) : (
                     <ul className="space-y-2 text-gray-300">
+                      {analysisResult?.validation && (
+                        <li>
+                          • Detected vs expected: {analysisResult.validation.detected_exercise ?? '—'}
+                          {analysisResult.validation.expected_exercise ? ` (expected: ${analysisResult.validation.expected_exercise})` : ''}
+                        </li>
+                      )}
                       <li>
                         • Overall score: {analysisResult?.analysis?.overall_score ?? '—'} / 10
                       </li>

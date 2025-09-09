@@ -94,7 +94,12 @@ class VideoService:
         }
         return aliases.get(key, key)
 
-    async def process_video(self, file: UploadFile, expected_exercise: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    async def process_video(
+        self,
+        file: UploadFile,
+        expected_exercise: Optional[str] = None,
+        strict: bool = False,
+    ) -> Optional[Dict[str, Any]]:
         """Complete video file processing"""
         temp_path = None
         expected_norm = self._normalize_exercise(expected_exercise)
@@ -118,10 +123,25 @@ class VideoService:
             # If client provided expected exercise, validate mismatch
             detected = result.get('movement_analysis', {}).get('exercise_type')
             if expected_norm and detected and expected_norm != detected:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Exercise mismatch: expected '{expected_norm}', detected '{detected}'"
-                )
+                if strict:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Exercise mismatch: expected '{expected_norm}', detected '{detected}'"
+                    )
+                # Attach validation info without failing
+                result.setdefault('validation', {})
+                result['validation'].update({
+                    'expected_exercise': expected_norm,
+                    'detected_exercise': detected,
+                    'match': False
+                })
+            elif expected_norm and detected:
+                result.setdefault('validation', {})
+                result['validation'].update({
+                    'expected_exercise': expected_norm,
+                    'detected_exercise': detected,
+                    'match': True
+                })
             
             return result
             
