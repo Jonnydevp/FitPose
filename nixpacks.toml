@@ -2,7 +2,7 @@
 # Ensure Python is present for Nixpacks Python phase, plus native deps for OpenCV/MediaPipe
 nixPkgs = ['python311', 'libGL', 'libglvnd', 'pkg-config', 'glib', 'zlib', 'mesa', 'xorg.libX11', 'xorg.libXext', 'xorg.libXrender']
 cmds = [
-  'apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install -y libgl1 libglib2.0-0 libxext6 libxrender1 libsm6 libgl1-mesa-dri'
+  'apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install -y libgl1 libglib2.0-0 libxext6 libxrender1 libsm6 libgl1-mesa-dri libxcb1 libxau6 libxdmcp6'
 ]
 
 [start]
