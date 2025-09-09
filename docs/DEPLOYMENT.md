@@ -57,23 +57,26 @@ curl https://your-railway-url.up.railway.app/health
    - Build Command: `npm run build`
    - Output Directory: `dist`
 
-3. **Environment Variables** (Optional)
-   ```env
-   VITE_API_URL=https://your-railway-url.up.railway.app
-   ```
+3. **Environment Variables**
+   - Option A (recommended: single URL via Vercel rewrite)
+     - Set `VITE_API_URL=""` in Vercel Project → Settings → Environment Variables
+     - Add Rewrite in Vercel Project → Settings → Routing → Rewrites:
+       - Source: `/api/(.*)` → Destination: `https://your-railway-url.up.railway.app/api/$1`
+     - Frontend will call relative `/api/...`, Vercel proxies to Railway
+
+   - Option B (direct calls to Railway)
+     - Set `VITE_API_URL=https://your-railway-url.up.railway.app`
+     - Ensure CORS on backend allows your Vercel domain
 
 ### 2. Configuration
 
 The included `vercel.json` handles routing automatically.
 
-### 3. Update API URL
+### 3. Configure API URL
 
-In `src/frontend/src/App.jsx`, update the API URL:
-```javascript
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-railway-url.up.railway.app' 
-  : 'http://localhost:8000';
-```
+Preferred: set a project env var in Vercel so you can change the backend without code changes:
+
+Use Option A (rewrite) or Option B (direct) from above. The app reads `VITE_API_URL` at build time.
 
 ## Configuration Files
 

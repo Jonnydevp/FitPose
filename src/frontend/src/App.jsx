@@ -14,10 +14,16 @@ const FitPoseApp = () => {
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
-  // API URL - Use Railway directly with proper CORS
-  const API_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://web-production-92856.up.railway.app' 
-    : 'http://localhost:8000';
+  // API base: prefer Vite env var in production deployments.
+  // If VITE_API_URL is set to an empty string, use same-origin (via Vercel rewrite).
+  const VITE_BASE = (typeof import.meta !== 'undefined' && import.meta.env)
+    ? import.meta.env.VITE_API_URL
+    : undefined;
+  const API_URL = (VITE_BASE !== undefined)
+    ? VITE_BASE
+    : (process.env.NODE_ENV === 'production'
+        ? 'https://web-production-92856.up.railway.app'
+        : 'http://localhost:8000');
 
   // Limit to supported exercises
   const exercises = [
@@ -66,7 +72,8 @@ const FitPoseApp = () => {
         formData.append('exercise_type', toSlug(selectedExercise));
       }
       
-            const response = await fetch(`${API_URL}/api/v1/analyze-exercise`, {
+            const base = API_URL || '';
+            const response = await fetch(`${base}/api/v1/analyze-exercise`, {
         method: 'POST',
         body: formData,
       });

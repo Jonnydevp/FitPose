@@ -88,6 +88,16 @@ cd src/frontend
 npm run dev
 ```
 
+For production builds on Vercel, set:
+```env
+VITE_API_URL=""
+```
+Then add a Vercel Rewrite (Project Settings → Routing → Rewrites):
+- Source: `/api/(.*)`
+- Destination: `https://your-railway-url.up.railway.app/api/$1`
+
+With this setup the frontend calls relative paths (same-origin), and Vercel proxies `/api/...` to Railway. If you prefer not to use rewrites, set `VITE_API_URL` to `https://your-railway-url.up.railway.app` instead.
+
 ## Deploy
 
 **One-Click Deploy:**
