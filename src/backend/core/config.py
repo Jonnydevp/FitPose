@@ -21,8 +21,14 @@ class Settings:
     host: str = os.getenv("HOST", "0.0.0.0")
     port: int = int(os.getenv("PORT", "8000"))
     
-    # OpenAI
+    # OpenAI / LLM Provider
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+    # Base URL can be switched to OpenRouter or Azure, etc.
+    # Examples:
+    #  - OpenAI:    https://api.openai.com/v1
+    #  - OpenRouter: https://openrouter.ai/api/v1
+    openai_api_base: str = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+    # Model name; on OpenRouter prefer vendor-prefixed names, e.g. "openai/gpt-4o-mini"
     openai_model: str = os.getenv("AI_MODEL", "gpt-4")
     ai_timeout_seconds: int = int(os.getenv("AI_TIMEOUT_SECONDS", "30"))
     
