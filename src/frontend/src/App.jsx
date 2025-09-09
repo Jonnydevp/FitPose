@@ -19,14 +19,12 @@ const FitPoseApp = () => {
     ? 'https://web-production-92856.up.railway.app' 
     : 'http://localhost:8000';
 
+  // Limit to supported exercises
   const exercises = [
-    'Push-ups',
-    'Squats', 
-    'Burpees',
-    'Planks',
-    'Lunges',
-    'Deadlifts',
     'Pull-ups',
+    'Squats',
+    'Deadlifts',
+    'Push-ups',
   ];
 
   const handleFileSelect = async (event) => {
