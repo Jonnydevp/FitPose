@@ -108,7 +108,7 @@ class VideoProcessor:
         
         return velocities
     
-    async def process_video(self, video_path: str) -> Optional[Dict]:
+    async def process_video(self, video_path: str, expected_exercise: Optional[str] = None) -> Optional[Dict]:
         """
         Main video processing function
         Returns movement vectors for GPT analysis (since we don't have our own model)
@@ -189,7 +189,7 @@ class VideoProcessor:
                 return None
             
             # Analyze data for rep counting
-            analysis_result = self.analyze_movement_patterns(all_frames_data)
+            analysis_result = self.analyze_movement_patterns(all_frames_data, expected_exercise=expected_exercise)
             
             result = {
                 'total_frames': len(all_frames_data),
@@ -206,8 +206,10 @@ class VideoProcessor:
             print(f"Error processing video: {str(e)}")
             return None
     
-    def analyze_movement_patterns(self, frames_data: List[Dict]) -> Dict:
-        """Analyzes movement patterns to determine exercise type and rep count"""
+    def analyze_movement_patterns(self, frames_data: List[Dict], expected_exercise: Optional[str] = None) -> Dict:
+        """Analyzes movement patterns to determine exercise type and rep count.
+        Uses simple heuristics per exercise for better rep counting.
+        """
         if not frames_data:
             return {}
         
@@ -216,30 +218,86 @@ class VideoProcessor:
         right_elbow_angles = [frame.get('right_elbow_angle', 0) for frame in frames_data]
         left_knee_angles = [frame.get('left_knee_angle', 0) for frame in frames_data]
         right_knee_angles = [frame.get('right_knee_angle', 0) for frame in frames_data]
+        left_wrist_y = [frame.get('left_wrist_y', 0) for frame in frames_data]
+        right_wrist_y = [frame.get('right_wrist_y', 0) for frame in frames_data]
+        # Approximate shoulder Y by inferring from angles is unreliable; prefer wrist proxies
+        wrist_y = [(l + r) / 2 for l, r in zip(left_wrist_y, right_wrist_y)]
         
-        # Simple analysis for exercise type detection
-        elbow_range = max(left_elbow_angles + right_elbow_angles) - min(left_elbow_angles + right_elbow_angles)
-        knee_range = max(left_knee_angles + right_knee_angles) - min(left_knee_angles + right_knee_angles)
-        
-        # Determine exercise type
+        # Ranges
+        elbow_range = (max(left_elbow_angles + right_elbow_angles) -
+                       min(left_elbow_angles + right_elbow_angles))
+        knee_range = (max(left_knee_angles + right_knee_angles) -
+                      min(left_knee_angles + right_knee_angles))
+        wrist_y_range = max(wrist_y) - min(wrist_y)  # normalized [0..1]
+
+        # Determine exercise type with improved heuristics
         exercise_type = "unknown"
-        if elbow_range > 60 and knee_range < 30:
-            exercise_type = "upper_body"  # push-ups, pull-ups
-        elif knee_range > 30 and elbow_range < 60:
-            exercise_type = "lower_body"  # squats, lunges
-        elif elbow_range > 30 and knee_range > 30:
-            exercise_type = "full_body"   # burpees
-        
-        # Simple rep counting (movement peaks)
-        estimated_reps = max(1, int(elbow_range / 20) if exercise_type == "upper_body" else int(knee_range / 20))
-        
+        # Pull-up: significant vertical movement of wrists/shoulders, large elbow flexion, minimal knee change
+        if wrist_y_range > 0.07 and elbow_range > 40 and knee_range < 25:
+            exercise_type = "pullup"
+        # Squat: large knee flexion and noticeable body vertical displacement
+        elif knee_range > 60 and wrist_y_range > 0.05:
+            exercise_type = "squat"
+        # Deadlift: moderate knee flexion, less vertical displacement than squat
+        elif 35 <= knee_range <= 60 and wrist_y_range <= 0.05:
+            exercise_type = "deadlift"
+        # Push-up: upper-body dominant, low vertical displacement, elbow flexion high
+        elif elbow_range > 50 and wrist_y_range <= 0.03 and knee_range < 25:
+            exercise_type = "pushup"
+        else:
+            # Fallback categories
+            if elbow_range > 60 and knee_range < 30:
+                exercise_type = "upper_body"
+            elif knee_range > 30 and elbow_range < 60:
+                exercise_type = "lower_body"
+            elif elbow_range > 30 and knee_range > 30:
+                exercise_type = "full_body"
+
+        # Exercise-specific rep counting via simple state machines
+        def count_reps_threshold(signal, low_thresh, high_thresh):
+            state = 'low'
+            reps = 0
+            for v in signal:
+                if state == 'low' and v < low_thresh:
+                    state = 'up'
+                elif state == 'up' and v > high_thresh:
+                    reps += 1
+                    state = 'low'
+            return reps
+
+        estimated_reps = 0
+        if exercise_type == 'pullup':
+            # For pull-ups, y decreases when moving up. Define thresholds using range.
+            y_min, y_max = min(wrist_y), max(wrist_y)
+            if y_max - y_min > 0.02:
+                up_thresh = y_min + 0.25 * (y_max - y_min)
+                down_thresh = y_min + 0.75 * (y_max - y_min)
+                # invert to count up then down crossings
+                estimated_reps = count_reps_threshold(wrist_y, up_thresh, down_thresh)
+        elif exercise_type in ('deadlift', 'squat'):
+            # Use knee angle: a rep is flexion then extension
+            angles = [(l + r) / 2 for l, r in zip(left_knee_angles, right_knee_angles)]
+            flex_thresh = 150 if exercise_type == 'deadlift' else 140
+            extend_thresh = 170
+            state = 'extended'
+            for a in angles:
+                if state == 'extended' and a < flex_thresh:
+                    state = 'flexed'
+                elif state == 'flexed' and a > extend_thresh:
+                    estimated_reps += 1
+                    state = 'extended'
+        else:
+            # Fallback: rough estimate from ranges
+            estimated_reps = max(1, int(max(elbow_range, knee_range) / 25))
+
         return {
             'exercise_type': exercise_type,
             'elbow_range': elbow_range,
             'knee_range': knee_range,
-            'estimated_reps': min(estimated_reps, 50),  # maximum 50 reps
-            'avg_left_elbow_angle': np.mean(left_elbow_angles),
-            'avg_right_elbow_angle': np.mean(right_elbow_angles),
-            'avg_left_knee_angle': np.mean(left_knee_angles),
-            'avg_right_knee_angle': np.mean(right_knee_angles)
+            'wrist_y_range': wrist_y_range,
+            'estimated_reps': int(min(estimated_reps, 200)),
+            'avg_left_elbow_angle': float(np.mean(left_elbow_angles)),
+            'avg_right_elbow_angle': float(np.mean(right_elbow_angles)),
+            'avg_left_knee_angle': float(np.mean(left_knee_angles)),
+            'avg_right_knee_angle': float(np.mean(right_knee_angles))
         }

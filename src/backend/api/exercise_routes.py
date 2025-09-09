@@ -1,8 +1,8 @@
 """
 API routes for exercise analysis
 """
-from typing import Dict, Any
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from typing import Dict, Any, Optional
+from fastapi import APIRouter, File, UploadFile, HTTPException, Form
 from fastapi.responses import JSONResponse
 
 from src.backend.services.video_service import VideoService
@@ -22,14 +22,17 @@ router = APIRouter(prefix="/api/v1", tags=["exercise"])
     Maximum file size: 50MB
     """
 )
-async def analyze_exercise(file: UploadFile = File(...)):
+async def analyze_exercise(
+    file: UploadFile = File(...),
+    exercise_type: Optional[str] = Form(None)
+):
     """Main endpoint for exercise analysis"""
     
     video_service = VideoService()
     analysis_service = AnalysisService()
     
     # Process video
-    vectors_data = await video_service.process_video(file)
+    vectors_data = await video_service.process_video(file, expected_exercise=exercise_type)
     
     # Analyze with AI
     result = await analysis_service.analyze_exercise_data(vectors_data)
