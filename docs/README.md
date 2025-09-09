@@ -56,13 +56,10 @@ GET /health
 
 ### Exercise Analysis
 ```http
-POST /api/exercise/analyze
+POST /api/v1/analyze-exercise
 Content-Type: multipart/form-data
 
-{
-  "video": [file],
-  "exercise_type": "squat" | "pushup" | "pullup"
-}
+file: [video file]
 ```
 
 **Response**: AI analysis with form assessment and suggestions.
@@ -72,7 +69,7 @@ Content-Type: multipart/form-data
 ### Backend
 ```bash
 source .venv/bin/activate
-uvicorn main:app --reload --host 0.0.0.0 --port 8001
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### Frontend

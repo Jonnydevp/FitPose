@@ -199,7 +199,7 @@ Respond only with JSON, no additional text.
                 'tempo': 'analysis unavailable'
             },
             'feedback': {
-                'positive': [f'Выполнено {rep_count} повторений', 'Движение зафиксировано'],
+                'positive': [f'Completed {rep_count} repetitions', 'Movement detected'],
                 'improvements': ['Detailed analysis requires AI connection'],
                 'specific_tips': ['Monitor your form', 'Maintain steady pace']
             },

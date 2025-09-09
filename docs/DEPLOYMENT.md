@@ -72,7 +72,7 @@ In `src/frontend/src/App.jsx`, update the API URL:
 ```javascript
 const API_URL = process.env.NODE_ENV === 'production' 
   ? 'https://your-railway-url.up.railway.app' 
-  : 'http://localhost:8001';
+  : 'http://localhost:8000';
 ```
 
 ## Configuration Files
