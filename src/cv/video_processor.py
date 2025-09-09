@@ -37,6 +37,9 @@ _loaded_gl = False
 for path in _gl_candidates:
     try:
         if os.path.exists(path):
+            # Preload and export LD_PRELOAD so subsequent imports inherit it
+            existing_preload = os.environ.get('LD_PRELOAD', '')
+            os.environ['LD_PRELOAD'] = f"{path}:{existing_preload}" if existing_preload else path
             ctypes.CDLL(path, mode=getattr(ctypes, "RTLD_GLOBAL", 0))
             _loaded_gl = True
             break
