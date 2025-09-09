@@ -1,7 +1,7 @@
 """
 API routes for exercise analysis
 """
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from fastapi import APIRouter, File, UploadFile, HTTPException, Form
 from fastapi.responses import JSONResponse
 
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/api/v1", tags=["exercise"])
 )
 async def analyze_exercise(
     file: UploadFile = File(...),
-    exercise_type: str | None = Form(None)
+    exercise_type: Optional[str] = Form(None)
 ):
     """Main endpoint for exercise analysis"""
     
