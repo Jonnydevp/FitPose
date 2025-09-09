@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple
 import asyncio
 import os
 import ctypes
+import glob
 
 # Force CPU path for MediaPipe in headless servers (Railway)
 os.environ.setdefault("MEDIAPIPE_DISABLE_GPU", "1")
@@ -21,12 +22,36 @@ for p in _ld_paths:
 os.environ["LD_LIBRARY_PATH"] = _existing_ld
 
 # Try to preload libGL to avoid 'libGL.so.1: cannot open shared object file'
-for _lib in ("libGL.so.1", "libGL.so"):
+# 1) Absolute candidates in common locations
+_gl_candidates = [
+    "/usr/lib/x86_64-linux-gnu/libGL.so.1",
+    "/lib/x86_64-linux-gnu/libGL.so.1",
+]
+for pattern in (
+    "/usr/lib/x86_64-linux-gnu/libGL.so*",
+    "/lib/x86_64-linux-gnu/libGL.so*",
+):
+    _gl_candidates.extend(glob.glob(pattern))
+
+_loaded_gl = False
+for path in _gl_candidates:
     try:
-        ctypes.CDLL(_lib)
-        break
+        if os.path.exists(path):
+            ctypes.CDLL(path, mode=getattr(ctypes, "RTLD_GLOBAL", 0))
+            _loaded_gl = True
+            break
     except OSError:
         continue
+
+# 2) Fallback to sonames if absolute paths failed
+if not _loaded_gl:
+    for _lib in ("libGL.so.1", "libGL.so"):
+        try:
+            ctypes.CDLL(_lib, mode=getattr(ctypes, "RTLD_GLOBAL", 0))
+            _loaded_gl = True
+            break
+        except OSError:
+            continue
 
 # Try to import computer vision libraries
 try:
