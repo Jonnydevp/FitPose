@@ -58,6 +58,8 @@ const FitPoseApp = () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      // Enforce strict validation for exercise mismatch
+      formData.append('strict', 'true');
       // Pass selected exercise to backend for validation and better heuristics
       const toSlug = (name) => name.toLowerCase().replace(/\s+/g, '').replace(/-/g, '');
       if (selectedExercise) {
