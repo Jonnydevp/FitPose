@@ -4,13 +4,16 @@ import requests
 import asyncio
 from typing import Dict, Any, Optional
 from dotenv import load_dotenv
+from src.backend.core.config import settings
 
 load_dotenv()
 
 class AIFeedbackService:
     def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY")
-        self.api_url = "https://api.openai.com/v1/chat/completions"
+        self.api_base = settings.openai_api_base
+        self.api_url = f"{self.api_base}/chat/completions"
+        self.model = settings.openai_model
         
         if not self.api_key:
             print("Warning: OPENAI_API_KEY not found in environment variables")
@@ -101,11 +104,19 @@ Respond only with JSON, no additional text.
         
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
+        # OpenRouter recommends these headers; harmless elsewhere
+        if "openrouter.ai" in self.api_base:
+            site = os.getenv("OPENROUTER_SITE_URL", "http://localhost")
+            app_title = os.getenv("OPENROUTER_APP_NAME", settings.app_name)
+            headers.update({
+                "HTTP-Referer": site,
+                "X-Title": app_title,
+            })
         
         data = {
-            "model": "gpt-4",
+            "model": self.model,
             "messages": [
                 {
                     "role": "system",
@@ -124,7 +135,7 @@ Respond only with JSON, no additional text.
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(
             None, 
-            lambda: requests.post(self.api_url, headers=headers, json=data, timeout=30)
+            lambda: requests.post(self.api_url, headers=headers, json=data, timeout=settings.ai_timeout_seconds)
         )
         
         if response.status_code != 200:
