@@ -1,6 +1,9 @@
 [phases.setup]
 # Ensure Python is present for Nixpacks Python phase, plus native deps for OpenCV/MediaPipe
-nixPkgs = ['python311', 'libGL', 'libglvnd', 'pkg-config', 'glib', 'zlib']
+nixPkgs = ['python311', 'libGL', 'libglvnd', 'pkg-config', 'glib', 'zlib', 'mesa', 'xorg.libX11', 'xorg.libXext', 'xorg.libXrender']
+cmds = [
+  'apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install -y libgl1-mesa-glx libglib2.0-0 libxext6 libxrender1 libsm6'
+]
 
 [start]
 cmd = "uvicorn main:app --host 0.0.0.0 --port $PORT"

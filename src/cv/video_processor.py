@@ -3,6 +3,9 @@ from typing import Dict, List, Optional, Tuple
 import asyncio
 import os
 
+# Force CPU path for MediaPipe in headless servers (Railway)
+os.environ.setdefault("MEDIAPIPE_DISABLE_GPU", "1")
+
 # Try to import computer vision libraries
 try:
     import cv2

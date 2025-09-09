@@ -123,17 +123,18 @@ class VideoService:
             # If client provided expected exercise, validate mismatch
             detected = result.get('movement_analysis', {}).get('exercise_type')
             if expected_norm and detected and expected_norm != detected:
-                if strict:
+                # If detection failed ('unknown'), do not hard-fail even in strict mode
+                if strict and detected != 'unknown':
                     raise HTTPException(
                         status_code=400,
                         detail=f"Exercise mismatch: expected '{expected_norm}', detected '{detected}'"
                     )
-                # Attach validation info without failing
+                # Attach validation info
                 result.setdefault('validation', {})
                 result['validation'].update({
                     'expected_exercise': expected_norm,
                     'detected_exercise': detected,
-                    'match': False
+                    'match': detected == expected_norm
                 })
             elif expected_norm and detected:
                 result.setdefault('validation', {})
