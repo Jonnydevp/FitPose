@@ -6,6 +6,8 @@ from fastapi import APIRouter
 
 from src.backend.core.config import settings
 from src.cv.video_processor import VideoProcessor
+import glob
+import ctypes
 import os
 
 router = APIRouter(tags=["system"])
@@ -65,5 +67,25 @@ async def cv_debug():
         info["numpy_version"] = getattr(np, "__version__", "unknown")
     except Exception as e:
         info["numpy_error"] = str(e)
+
+    # Extra diagnostics for libGL
+    info["ld_library_path"] = os.getenv("LD_LIBRARY_PATH", "")
+    candidates = []
+    for pattern in [
+        "/usr/lib/x86_64-linux-gnu/libGL*",
+        "/usr/local/lib/libGL*",
+        "/lib/x86_64-linux-gnu/libGL*",
+    ]:
+        candidates.extend(glob.glob(pattern))
+    info["libgl_candidates"] = sorted(set(candidates))
+
+    # Try dlopen
+    for lib in ("libGL.so.1", "libGL.so"):
+        try:
+            ctypes.CDLL(lib)
+            info["dlopen_libGL"] = f"ok: {lib}"
+            break
+        except OSError as e:
+            info.setdefault("dlopen_errors", []).append({lib: str(e)})
 
     return info
