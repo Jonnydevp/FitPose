@@ -7,6 +7,9 @@ import glob
 
 # Force CPU path for MediaPipe in headless servers (Railway)
 os.environ.setdefault("MEDIAPIPE_DISABLE_GPU", "1")
+os.environ.setdefault("OPENCV_DISABLE_GPU", "1")
+os.environ.setdefault("LIBGL_ALWAYS_SOFTWARE", "1")
+os.environ.setdefault("MESA_LOADER_DRIVER_OVERRIDE", "llvmpipe")
 
 # Ensure system GL libraries are discoverable at runtime (Railway Ubuntu 24.04)
 # Some builds use Nix python which may not see apt-installed libs unless we extend LD_LIBRARY_PATH
@@ -48,6 +51,13 @@ for path in _gl_candidates:
 
 # 2) Fallback to sonames if absolute paths failed
 if not _loaded_gl:
+    # Try preloading GL dispatch/GLX chain first
+    for _dep in ("/usr/lib/x86_64-linux-gnu/libGLdispatch.so.0", "/usr/lib/x86_64-linux-gnu/libGLX.so.0"):
+        try:
+            if os.path.exists(_dep):
+                ctypes.CDLL(_dep, mode=getattr(ctypes, "RTLD_GLOBAL", 0))
+        except OSError:
+            pass
     for _lib in ("libGL.so.1", "libGL.so"):
         try:
             ctypes.CDLL(_lib, mode=getattr(ctypes, "RTLD_GLOBAL", 0))

@@ -88,4 +88,13 @@ async def cv_debug():
         except OSError as e:
             info.setdefault("dlopen_errors", []).append({lib: str(e)})
 
+    # If libGL exists, run ldd to see unresolved deps
+    import subprocess
+    for p in info.get("libgl_candidates", [])[:1]:
+        try:
+            out = subprocess.check_output(["/usr/bin/ldd", p], text=True, stderr=subprocess.STDOUT)
+            info["ldd_libGL"] = out
+        except Exception as e:
+            info["ldd_error"] = str(e)
+
     return info
