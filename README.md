@@ -61,13 +61,10 @@ GET /health
 
 ### Exercise Analysis
 ```http
-POST /api/exercise/analyze
+POST /api/v1/analyze-exercise
 Content-Type: multipart/form-data
 
-{
-  "video": [video file],
-  "exercise_type": "squat" | "pushup" | "pullup"
-}
+file: [video file]
 ```
 
 ## Environment
@@ -82,7 +79,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 ### Backend
 ```bash
 source .venv/bin/activate
-uvicorn main:app --reload --host 0.0.0.0 --port 8001
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### Frontend

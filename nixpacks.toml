@@ -1,11 +1,6 @@
 [phases.setup]
-nixPkgs = ['...', 'libGL', 'libglvnd', 'pkg-config']
-
-[phases.install]
-dependsOn = ['setup']
-
-[phases.build]
-dependsOn = ['install']
+# Minimal native deps for OpenCV/MediaPipe in Nixpacks
+nixPkgs = ['libGL', 'libglvnd', 'pkg-config', 'glib', 'zlib']
 
 [start]
-cmd = 'uvicorn main:app --host 0.0.0.0 --port $PORT'
+cmd = "uvicorn main:app --host 0.0.0.0 --port $PORT"

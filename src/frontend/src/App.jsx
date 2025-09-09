@@ -17,7 +17,7 @@ const FitPoseApp = () => {
   // API URL - Use Railway directly with proper CORS
   const API_URL = process.env.NODE_ENV === 'production' 
     ? 'https://web-production-92856.up.railway.app' 
-    : 'http://localhost:8001';
+    : 'http://localhost:8000';
 
   const exercises = [
     'Push-ups',
