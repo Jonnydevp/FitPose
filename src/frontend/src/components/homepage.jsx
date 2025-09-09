@@ -10,7 +10,9 @@ const HomePage = ({
   fileInputRef,
   handleFileSelect,
   resetAnalysis,
-  exercises
+  exercises,
+  analysisResult,
+  error,
 }) => (
   <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
     <div className="relative overflow-hidden py-24">
@@ -106,12 +108,40 @@ const HomePage = ({
                 </p>
                 <div className="bg-white/5 rounded-xl p-6 text-left">
                   <h4 className="text-lg font-semibold text-white mb-3">Analysis Results:</h4>
-                  <ul className="space-y-2 text-gray-300">
-                    <li>• Form accuracy: 85% - Good job!</li>
-                    <li>• Posture alignment: Excellent</li>
-                    <li>• Range of motion: 92%</li>
-                    <li>• Recommendations: Keep your core engaged throughout the movement</li>
-                  </ul>
+                  {error ? (
+                    <p className="text-red-300">{error}</p>
+                  ) : (
+                    <ul className="space-y-2 text-gray-300">
+                      <li>
+                        • Overall score: {analysisResult?.analysis?.overall_score ?? '—'} / 10
+                      </li>
+                      <li>
+                        • Detected exercise: {analysisResult?.analysis?.exercise_detected ?? selectedExercise}
+                      </li>
+                      <li>
+                        • Form quality: {analysisResult?.analysis?.technique_analysis?.form_quality ?? '—'}
+                      </li>
+                      <li>
+                        • Symmetry: {analysisResult?.analysis?.technique_analysis?.symmetry ?? '—'}
+                      </li>
+                      <li>
+                        • Range of motion: {analysisResult?.analysis?.technique_analysis?.range_of_motion ?? '—'}
+                      </li>
+                      <li>
+                        • Tempo: {analysisResult?.analysis?.technique_analysis?.tempo ?? '—'}
+                      </li>
+                      {Array.isArray(analysisResult?.analysis?.feedback?.specific_tips) && analysisResult.analysis.feedback.specific_tips.length > 0 && (
+                        <li>
+                          • Recommendations: {analysisResult.analysis.feedback.specific_tips[0]}
+                        </li>
+                      )}
+                      {typeof analysisResult?.metrics?.rep_count !== 'undefined' && (
+                        <li>
+                          • Estimated reps: {analysisResult.metrics.rep_count}
+                        </li>
+                      )}
+                    </ul>
+                  )}
                 </div>
                 <button
                   onClick={resetAnalysis}
