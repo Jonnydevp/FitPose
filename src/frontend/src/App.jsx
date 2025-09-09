@@ -60,6 +60,11 @@ const FitPoseApp = () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      // Pass selected exercise to backend for validation and better heuristics
+      const toSlug = (name) => name.toLowerCase().replace(/\s+/g, '').replace(/-/g, '');
+      if (selectedExercise) {
+        formData.append('exercise_type', toSlug(selectedExercise));
+      }
       
             const response = await fetch(`${API_URL}/api/v1/analyze-exercise`, {
         method: 'POST',
