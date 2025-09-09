@@ -72,7 +72,13 @@ const FitPoseApp = () => {
       });
       
       if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
+        // Try to read API error payload
+        let detail = `Server error: ${response.status}`;
+        try {
+          const err = await response.json();
+          if (err && err.detail) detail = err.detail;
+        } catch {}
+        throw new Error(detail);
       }
       
       const result = await response.json();

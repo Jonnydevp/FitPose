@@ -24,7 +24,8 @@ router = APIRouter(prefix="/api/v1", tags=["exercise"])
 )
 async def analyze_exercise(
     file: UploadFile = File(...),
-    exercise_type: Optional[str] = Form(None)
+    exercise_type: Optional[str] = Form(None),
+    strict: Optional[bool] = Form(False),
 ):
     """Main endpoint for exercise analysis"""
     
@@ -32,7 +33,11 @@ async def analyze_exercise(
     analysis_service = AnalysisService()
     
     # Process video
-    vectors_data = await video_service.process_video(file, expected_exercise=exercise_type)
+    vectors_data = await video_service.process_video(
+        file,
+        expected_exercise=exercise_type,
+        strict=bool(strict),
+    )
     
     # Analyze with AI
     result = await analysis_service.analyze_exercise_data(vectors_data)
