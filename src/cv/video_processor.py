@@ -2,9 +2,31 @@ import json
 from typing import Dict, List, Optional, Tuple
 import asyncio
 import os
+import ctypes
 
 # Force CPU path for MediaPipe in headless servers (Railway)
 os.environ.setdefault("MEDIAPIPE_DISABLE_GPU", "1")
+
+# Ensure system GL libraries are discoverable at runtime (Railway Ubuntu 24.04)
+# Some builds use Nix python which may not see apt-installed libs unless we extend LD_LIBRARY_PATH
+_ld_paths = [
+    "/usr/lib/x86_64-linux-gnu",
+    "/usr/local/lib",
+    "/lib/x86_64-linux-gnu",
+]
+_existing_ld = os.environ.get("LD_LIBRARY_PATH", "")
+for p in _ld_paths:
+    if p and p not in _existing_ld:
+        _existing_ld = f"{p}:{_existing_ld}" if _existing_ld else p
+os.environ["LD_LIBRARY_PATH"] = _existing_ld
+
+# Try to preload libGL to avoid 'libGL.so.1: cannot open shared object file'
+for _lib in ("libGL.so.1", "libGL.so"):
+    try:
+        ctypes.CDLL(_lib)
+        break
+    except OSError:
+        continue
 
 # Try to import computer vision libraries
 try:
