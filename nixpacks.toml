@@ -1,6 +1,6 @@
 [phases.setup]
-# Minimal native deps for OpenCV/MediaPipe in Nixpacks
-nixPkgs = ['libGL', 'libglvnd', 'pkg-config', 'glib', 'zlib']
+# Ensure Python is present for Nixpacks Python phase, plus native deps for OpenCV/MediaPipe
+nixPkgs = ['python311', 'libGL', 'libglvnd', 'pkg-config', 'glib', 'zlib']
 
 [start]
 cmd = "uvicorn main:app --host 0.0.0.0 --port $PORT"
