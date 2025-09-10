@@ -94,6 +94,12 @@ const HomePage = ({
                     )}
                   </div>
                 </div>
+
+                {error && (
+                  <div className="text-sm text-red-300 mt-2">
+                    {error}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center space-y-6">

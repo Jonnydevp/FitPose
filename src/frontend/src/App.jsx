@@ -64,12 +64,15 @@ const FitPoseApp = () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      // Enforce strict validation for exercise mismatch
-      formData.append('strict', 'true');
+      // Strict validation flag via env (Vercel → VITE_STRICT_VALIDATE=true)
+      const STRICT_VALIDATE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_STRICT_VALIDATE === 'true');
       // Pass selected exercise to backend for validation and better heuristics
       const toSlug = (name) => name.toLowerCase().replace(/\s+/g, '').replace(/-/g, '');
       if (selectedExercise) {
         formData.append('exercise_type', toSlug(selectedExercise));
+      }
+      if (STRICT_VALIDATE) {
+        formData.append('strict', 'true');
       }
       
             const base = API_URL || '';
