@@ -54,12 +54,18 @@ class Settings:
     temp_dir: str = os.getenv("TEMP_DIR", "/tmp" if os.name == "posix" else "temp")
 
     # Gates thresholds (tunable via env)
-    person_frames_ratio_min: float = float(os.getenv("PERSON_FRAMES_RATIO_MIN", "0.20"))
-    person_avg_visibility_min: float = float(os.getenv("PERSON_AVG_VIS_MIN", "0.50"))
-    person_min_keypoints: int = int(os.getenv("PERSON_MIN_KEYPOINTS", "8"))
+    # Level 1: Critical gates (blocking) - только для явно плохих видео
+    person_frames_ratio_min: float = float(os.getenv("PERSON_FRAMES_RATIO_MIN", "0.10"))  # Снижено с 0.20
+    person_avg_visibility_min: float = float(os.getenv("PERSON_AVG_VIS_MIN", "0.35"))     # Снижено с 0.50
+    person_min_keypoints: int = int(os.getenv("PERSON_MIN_KEYPOINTS", "6"))               # Снижено с 8
 
-    motion_score_min: float = float(os.getenv("MOTION_SCORE_MIN", "0.70"))
+    motion_score_min: float = float(os.getenv("MOTION_SCORE_MIN", "0.40"))                # Снижено с 0.70
     exercise_confidence_min: float = float(os.getenv("EXERCISE_CONF_MIN", "0.60"))
+    
+    # Level 2: Quality gates (warnings) - для информирования AI о качестве
+    person_frames_ratio_good: float = float(os.getenv("PERSON_FRAMES_RATIO_GOOD", "0.30"))
+    person_avg_visibility_good: float = float(os.getenv("PERSON_AVG_VIS_GOOD", "0.60"))
+    motion_score_good: float = float(os.getenv("MOTION_SCORE_GOOD", "0.80"))
 
 
 # Global settings

@@ -39,7 +39,7 @@ class AIFeedbackService:
             return self.get_fallback_response(vectors_data)
     
     def prepare_analysis_prompt(self, vectors_data: Dict) -> str:
-        """Prepares prompt for movement analysis"""
+        """Prepares prompt for movement analysis with quality context"""
         
         movement_analysis = vectors_data.get('movement_analysis', {})
         exercise_type = movement_analysis.get('exercise_type', 'unknown')
@@ -56,6 +56,26 @@ class AIFeedbackService:
         elbow_range = movement_analysis.get('elbow_range', 0)
         knee_range = movement_analysis.get('knee_range', 0)
         
+        # Quality information
+        validation = vectors_data.get('validation', {})
+        quality_score = validation.get('quality_score', 1.0)
+        quality_warnings = validation.get('quality_warnings', [])
+        diagnostics = vectors_data.get('diagnostics', {})
+        
+        # Quality context for AI
+        quality_context = ""
+        if quality_score < 0.8 or quality_warnings:
+            quality_context = f"""
+VIDEO QUALITY CONTEXT:
+- Quality score: {quality_score:.2f}/1.0 {'(Limited quality)' if quality_score < 0.8 else '(Good quality)'}
+- Quality warnings: {', '.join(quality_warnings) if quality_warnings else 'None'}
+- Pose detection: {diagnostics.get('avg_visibility', 0):.2f} average visibility
+- Motion score: {diagnostics.get('motion_score', 0):.2f}
+
+IMPORTANT: Due to video quality limitations, focus on general advice rather than detailed biomechanical analysis. 
+Be more encouraging and provide foundational tips rather than precise technical corrections.
+"""
+        
         prompt = f"""
 You are a professional fitness trainer and biomechanics expert. Analyze the user's movement data and provide detailed feedback.
 
@@ -69,7 +89,7 @@ EXERCISE DATA:
 - Average right knee angle: {avg_knee_right:.1f}°
 - Elbow range of motion: {elbow_range:.1f}°
 - Knee range of motion: {knee_range:.1f}°
-
+{quality_context}
 TASK:
 Analyze the exercise technique and provide feedback in JSON format:
 

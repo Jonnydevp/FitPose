@@ -185,28 +185,12 @@ class VideoProcessor:
     
     async def process_video(self, video_path: str, expected_exercise: Optional[str] = None) -> Optional[Dict]:
         """
-        Main video processing function
-        Returns movement vectors for GPT analysis (since we don't have our own model)
+        Main video processing function with improved error handling
+        Returns movement vectors for AI analysis
         """
         if not CV_AVAILABLE:
             print("Warning: Computer vision processing not available")
-            return {
-                'total_frames': 100,
-                'duration': 10.0,
-                'fps': 30.0,
-                'frames_data': [],
-                'movement_analysis': {
-                    'exercise_type': 'unknown',
-                    'elbow_range': 0,
-                    'knee_range': 0,
-                    'estimated_reps': 1,
-                    'avg_left_elbow_angle': 180,
-                    'avg_right_elbow_angle': 180,
-                    'avg_left_knee_angle': 180,
-                    'avg_right_knee_angle': 180
-                },
-                'rep_count': 1
-            }
+            return self._generate_fallback_result()
             
         try:
             cap = cv2.VideoCapture(video_path)
@@ -214,20 +198,34 @@ class VideoProcessor:
                 print(f"Error opening video: {video_path}")
                 return None
 
-            fps = cap.get(cv2.CAP_PROP_FPS)
+            fps = cap.get(cv2.CAP_PROP_FPS) or 30.0  # Fallback FPS
             frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            duration = frame_count / fps
+            duration = frame_count / fps if fps > 0 else 10.0
+            
+            # Минимальные требования для обработки
+            if frame_count < 5:
+                print(f"Video too short: {frame_count} frames")
+                return None
             
             all_frames_data = []
             previous_features = None
             frame_id = 0
+            processed_frames = 0
             
-            print(f"Processing video: {frame_count} frames, {fps} FPS, {duration:.2f}s")
+            print(f"Processing video: {frame_count} frames, {fps:.1f} FPS, {duration:.2f}s")
+            
+            # Адаптивная обработка - для длинных видео обрабатываем каждый N-й кадр
+            frame_skip = max(1, int(fps / 10)) if fps > 20 else 1  # Максимум 10 FPS обработки
             
             while True:
                 ret, frame = cap.read()
                 if not ret:
                     break
+                
+                # Пропускаем кадры для ускорения если видео длинное
+                if frame_id % frame_skip != 0:
+                    frame_id += 1
+                    continue
                 
                 # Convert to RGB for MediaPipe
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -237,20 +235,22 @@ class VideoProcessor:
                     # Extract features
                     features = self.extract_landmarks_features(results.pose_landmarks)
                     
-                    # Add metadata
-                    frame_data = {
-                        'frame_id': frame_id,
-                        'timestamp': frame_id / fps,
-                        **features
-                    }
-                    
-                    # Calculate velocities if previous frame exists
-                    if previous_features:
-                        velocities = self.calculate_velocity(features, previous_features, fps)
-                        frame_data.update(velocities)
-                    
-                    all_frames_data.append(frame_data)
-                    previous_features = features
+                    if features:  # Только если получили валидные features
+                        # Add metadata
+                        frame_data = {
+                            'frame_id': frame_id,
+                            'timestamp': frame_id / fps,
+                            **features
+                        }
+                        
+                        # Calculate velocities if previous frame exists
+                        if previous_features:
+                            velocities = self.calculate_velocity(features, previous_features, fps)
+                            frame_data.update(velocities)
+                        
+                        all_frames_data.append(frame_data)
+                        previous_features = features
+                        processed_frames += 1
                 
                 frame_id += 1
                 
@@ -260,7 +260,13 @@ class VideoProcessor:
             
             cap.release()
             
+            # Проверяем результат обработки
             if not all_frames_data:
+                print("No pose data extracted from video")
+                return None
+            
+            if processed_frames < 3:  # Слишком мало кадров с позой
+                print(f"Insufficient pose data: {processed_frames} frames")
                 return None
             
             # Analyze data for rep counting
@@ -273,7 +279,12 @@ class VideoProcessor:
                 'frames_data': all_frames_data,
                 'movement_analysis': analysis_result,
                 'rep_count': analysis_result.get('estimated_reps', 0),
-                'source_total_frames': frame_count
+                'source_total_frames': frame_count,
+                'processing_info': {
+                    'frame_skip': frame_skip,
+                    'processed_frames': processed_frames,
+                    'processing_ratio': round(processed_frames / frame_count, 3)
+                }
             }
             
             return result
@@ -281,6 +292,31 @@ class VideoProcessor:
         except Exception as e:
             print(f"Error processing video: {str(e)}")
             return None
+    
+    def _generate_fallback_result(self) -> Dict:
+        """Generates fallback result when CV is not available"""
+        return {
+            'total_frames': 100,
+            'duration': 10.0,
+            'fps': 30.0,
+            'frames_data': [],
+            'movement_analysis': {
+                'exercise_type': 'unknown',
+                'elbow_range': 0,
+                'knee_range': 0,
+                'estimated_reps': 1,
+                'avg_left_elbow_angle': 180,
+                'avg_right_elbow_angle': 180,
+                'avg_left_knee_angle': 180,
+                'avg_right_knee_angle': 180,
+                'confidence': 0.1
+            },
+            'rep_count': 1,
+            'processing_info': {
+                'cv_available': False,
+                'fallback_mode': True
+            }
+        }
     
     def analyze_movement_patterns(self, frames_data: List[Dict], expected_exercise: Optional[str] = None) -> Dict:
         """Analyzes movement patterns to determine exercise type and rep count.

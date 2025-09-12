@@ -171,7 +171,7 @@ class VideoService:
         pass
 
     def _apply_gates(self, result: Dict[str, Any]) -> Dict[str, Any]:
-        """Person/Motion gates with diagnostics. Raises HTTPException on failure."""
+        """Многоуровневая валидация: критичные проверки + качественные предупреждения"""
         frames = result.get('frames_data', [])
         movement = result.get('movement_analysis', {})
         fps = result.get('fps') or 30.0
@@ -179,7 +179,8 @@ class VideoService:
 
         frames_with_pose = len(frames)
         ratio = (frames_with_pose / source_total) if source_total else 0.0
-        # visibility stats
+        
+        # Статистика видимости
         vis_keys = [
             'left_shoulder_visibility','right_shoulder_visibility',
             'left_hip_visibility','right_hip_visibility',
@@ -202,6 +203,7 @@ class VideoService:
             min_kp = min(counts) if counts else 0
         avg_vis = (sum(vis_vals)/len(vis_vals)) if vis_vals else 0.0
 
+        # Диагностика
         diagnostics = result.setdefault('diagnostics', {})
         diagnostics.update({
             'frames_with_pose_ratio': round(ratio,3),
@@ -211,6 +213,8 @@ class VideoService:
             'sample_fps': fps,
         })
 
+        # 🚫 УРОВЕНЬ 1: КРИТИЧНЫЕ ПРОВЕРКИ (блокирующие)
+        # Только для явно неподходящих видео
         if ratio < settings.person_frames_ratio_min or avg_vis < settings.person_avg_visibility_min or min_kp < settings.person_min_keypoints:
             raise HTTPException(
                 status_code=422,
@@ -218,12 +222,17 @@ class VideoService:
                     'status':'error',
                     'code':'NO_PERSON',
                     'message':'No person detected in the video',
-                    'tips':[ 'Ensure full body is in frame', 'Improve lighting', 'Keep camera steady' ],
+                    'tips':[ 
+                        'Ensure full body is visible in frame', 
+                        'Improve lighting and camera angle', 
+                        'Keep camera steady and avoid motion blur',
+                        'Stand closer to camera or zoom in'
+                    ],
                     'diagnostics': diagnostics
                 }
             )
 
-        # Motion Gate
+        # Анализ движения
         amp = {
             'elbow': float(movement.get('elbow_range',0.0)),
             'knee': float(movement.get('knee_range',0.0)),
@@ -237,24 +246,51 @@ class VideoService:
             (amp['wristY']/0.05) if 0.05 else 0.0,
         )
         diagnostics.update({'motion_amplitude': amp, 'motion_score': round(motion_score,2)})
-        # fps-aware softening
-        motion_threshold = settings.motion_score_min - (0.10 if fps and fps < 20 else 0.0)
-        # allow pass if уже посчитались репы ≥ 1
+        
+        # Адаптивный порог для низкого FPS
+        motion_threshold = settings.motion_score_min - (0.15 if fps and fps < 20 else 0.0)
         rep_count = int(movement.get('estimated_reps', 0))
+        
+        # Блокируем только если совсем нет движения И нет повторений
         if motion_score < motion_threshold and rep_count < 1:
             raise HTTPException(
                 status_code=422,
                 detail={
                     'status':'error',
                     'code':'INSUFFICIENT_MOTION',
-                    'message':'Insufficient motion for analysis',
-                    'tips':[ 'Perform at least one full repetition', 'Increase movement amplitude' ],
+                    'message':'Insufficient motion for exercise analysis',
+                    'tips':[ 
+                        'Perform at least one complete repetition', 
+                        'Make movements more pronounced',
+                        'Ensure you\'re doing the exercise throughout the video',
+                        'Check that your full body is visible'
+                    ],
                     'diagnostics': diagnostics
                 }
             )
 
-        # Attach confidence for downstream/front diagnostics
-        conf = float(movement.get('confidence',0.0))
+        # 🟡 УРОВЕНЬ 2: КАЧЕСТВЕННЫЕ ПРЕДУПРЕЖДЕНИЯ (не блокирующие)
+        quality_warnings = []
+        quality_score = 1.0
+        
+        if ratio < settings.person_frames_ratio_good:
+            quality_warnings.append("Person visibility could be improved")
+            quality_score *= 0.8
+            
+        if avg_vis < settings.person_avg_visibility_good:
+            quality_warnings.append("Pose detection quality is low")
+            quality_score *= 0.8
+            
+        if motion_score < settings.motion_score_good:
+            quality_warnings.append("Movement amplitude is limited")
+            quality_score *= 0.9
+
+        # Информация о качестве для AI
         result.setdefault('validation', {})
-        result['validation'].update({'confidence': round(conf,2)})
+        result['validation'].update({
+            'quality_score': round(quality_score, 2),
+            'quality_warnings': quality_warnings,
+            'confidence': round(float(movement.get('confidence',0.0)), 2)
+        })
+        
         return result
