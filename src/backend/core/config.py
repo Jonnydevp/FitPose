@@ -53,6 +53,14 @@ class Settings:
     # Paths (Railway compatible)
     temp_dir: str = os.getenv("TEMP_DIR", "/tmp" if os.name == "posix" else "temp")
 
+    # Gates thresholds (tunable via env)
+    person_frames_ratio_min: float = float(os.getenv("PERSON_FRAMES_RATIO_MIN", "0.20"))
+    person_avg_visibility_min: float = float(os.getenv("PERSON_AVG_VIS_MIN", "0.50"))
+    person_min_keypoints: int = int(os.getenv("PERSON_MIN_KEYPOINTS", "8"))
+
+    motion_score_min: float = float(os.getenv("MOTION_SCORE_MIN", "0.70"))
+    exercise_confidence_min: float = float(os.getenv("EXERCISE_CONF_MIN", "0.60"))
+
 
 # Global settings
 settings = Settings()

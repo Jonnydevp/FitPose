@@ -123,10 +123,12 @@ class VideoService:
             result = self._apply_gates(result)
 
             # If client provided expected exercise, validate mismatch
-            detected = result.get('movement_analysis', {}).get('exercise_type')
+            movement = result.get('movement_analysis', {})
+            detected = movement.get('exercise_type')
+            conf = float(movement.get('confidence', 0.0))
             if expected_norm and detected and expected_norm != detected:
                 # If detection failed ('unknown'), do not hard-fail even in strict mode
-                if strict and detected != 'unknown':
+                if strict and detected != 'unknown' and conf >= settings.exercise_confidence_min:
                     raise HTTPException(
                         status_code=400,
                         detail=f"Exercise mismatch: expected '{expected_norm}', detected '{detected}'"
@@ -145,7 +147,7 @@ class VideoService:
                     'detected_exercise': detected,
                     'match': True
                 })
-            
+
             return result
             
         except HTTPException:
@@ -209,7 +211,7 @@ class VideoService:
             'sample_fps': fps,
         })
 
-        if ratio < 0.30 or avg_vis < 0.60 or min_kp < 10:
+        if ratio < settings.person_frames_ratio_min or avg_vis < settings.person_avg_visibility_min or min_kp < settings.person_min_keypoints:
             raise HTTPException(
                 status_code=422,
                 detail={
@@ -235,7 +237,11 @@ class VideoService:
             (amp['wristY']/0.05) if 0.05 else 0.0,
         )
         diagnostics.update({'motion_amplitude': amp, 'motion_score': round(motion_score,2)})
-        if motion_score < 1.0:
+        # fps-aware softening
+        motion_threshold = settings.motion_score_min - (0.10 if fps and fps < 20 else 0.0)
+        # allow pass if уже посчитались репы ≥ 1
+        rep_count = int(movement.get('estimated_reps', 0))
+        if motion_score < motion_threshold and rep_count < 1:
             raise HTTPException(
                 status_code=422,
                 detail={
