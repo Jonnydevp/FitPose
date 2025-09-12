@@ -163,7 +163,11 @@ class VideoProcessor:
             'left_elbow_visibility': left_elbow.visibility,
             'right_elbow_visibility': right_elbow.visibility,
             'left_knee_visibility': left_knee.visibility,
-            'right_knee_visibility': right_knee.visibility
+            'right_knee_visibility': right_knee.visibility,
+            'left_shoulder_visibility': left_shoulder.visibility,
+            'right_shoulder_visibility': right_shoulder.visibility,
+            'left_hip_visibility': left_hip.visibility,
+            'right_hip_visibility': right_hip.visibility
         }
         
         return features
@@ -268,7 +272,8 @@ class VideoProcessor:
                 'fps': fps,
                 'frames_data': all_frames_data,
                 'movement_analysis': analysis_result,
-                'rep_count': analysis_result.get('estimated_reps', 0)
+                'rep_count': analysis_result.get('estimated_reps', 0),
+                'source_total_frames': frame_count
             }
             
             return result
@@ -342,6 +347,22 @@ class VideoProcessor:
             elif elbow_range > 30 and knee_range > 30:
                 exercise_type = "full_body"
 
+        # Confidence estimation (0..1) — чем дальше от порогов, тем выше
+        def _norm(v, lo, hi):
+            try:
+                return max(0.0, min(1.0, (v - lo) / (hi - lo)))
+            except Exception:
+                return 0.0
+        confidence = 0.3  # базовый
+        if exercise_type == 'pullup':
+            confidence = 0.4 + 0.3*_norm(max(wrist_y_range, shoulder_y_range), 0.05, 0.12) + 0.3*_norm(elbow_range, 30, 80)
+        elif exercise_type == 'squat':
+            confidence = 0.4 + 0.4*_norm(knee_range, 50, 100) + 0.2*_norm(max(wrist_y_range, shoulder_y_range), 0.03, 0.10)
+        elif exercise_type == 'deadlift':
+            confidence = 0.4 + 0.3*_norm(hip_range, 15, 60) + 0.3*_norm(knee_range, 20, 55)
+        elif exercise_type == 'pushup':
+            confidence = 0.4 + 0.3*_norm(elbow_range, 40, 90) + 0.3*_norm(max(wrist_y_range, shoulder_y_range), 0.0, 0.03)
+
         # Rep counting with hysteresis
         def count_reps_pullup(y_series: List[float]) -> int:
             y_min, y_max = min(y_series), max(y_series)
@@ -400,5 +421,6 @@ class VideoProcessor:
             'avg_left_elbow_angle': float(np.mean(left_elbow_angles)),
             'avg_right_elbow_angle': float(np.mean(right_elbow_angles)),
             'avg_left_knee_angle': float(np.mean(left_knee_angles)),
-            'avg_right_knee_angle': float(np.mean(right_knee_angles))
+            'avg_right_knee_angle': float(np.mean(right_knee_angles)),
+            'confidence': float(max(0.0, min(confidence, 1.0)))
         }

@@ -119,7 +119,9 @@ class VideoService:
                     status_code=422,
                     detail="Failed to process video. Please check video quality and content."
                 )
-            
+            # Gates: person presence and motion sufficiency
+            result = self._apply_gates(result)
+
             # If client provided expected exercise, validate mismatch
             detected = result.get('movement_analysis', {}).get('exercise_type')
             if expected_norm and detected and expected_norm != detected:
@@ -165,3 +167,88 @@ class VideoService:
         """Cleanup old temporary files"""
         # Can add logic for cleaning old files
         pass
+
+    def _apply_gates(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        """Person/Motion gates with diagnostics. Raises HTTPException on failure."""
+        frames = result.get('frames_data', [])
+        movement = result.get('movement_analysis', {})
+        fps = result.get('fps') or 30.0
+        source_total = int(result.get('source_total_frames') or len(frames))
+
+        frames_with_pose = len(frames)
+        ratio = (frames_with_pose / source_total) if source_total else 0.0
+        # visibility stats
+        vis_keys = [
+            'left_shoulder_visibility','right_shoulder_visibility',
+            'left_hip_visibility','right_hip_visibility',
+            'left_knee_visibility','right_knee_visibility',
+            'left_elbow_visibility','right_elbow_visibility'
+        ]
+        vis_vals = []
+        min_kp = 0
+        if frames:
+            counts = []
+            for f in frames:
+                cnt = 0
+                for k in vis_keys:
+                    v = f.get(k)
+                    if isinstance(v,(int,float)):
+                        vis_vals.append(v)
+                        if v > 0.5:
+                            cnt += 1
+                counts.append(cnt)
+            min_kp = min(counts) if counts else 0
+        avg_vis = (sum(vis_vals)/len(vis_vals)) if vis_vals else 0.0
+
+        diagnostics = result.setdefault('diagnostics', {})
+        diagnostics.update({
+            'frames_with_pose_ratio': round(ratio,3),
+            'avg_visibility': round(avg_vis,3),
+            'min_keypoints_per_frame': int(min_kp),
+            'source_total_frames': source_total,
+            'sample_fps': fps,
+        })
+
+        if ratio < 0.30 or avg_vis < 0.60 or min_kp < 10:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    'status':'error',
+                    'code':'NO_PERSON',
+                    'message':'No person detected in the video',
+                    'tips':[ 'Ensure full body is in frame', 'Improve lighting', 'Keep camera steady' ],
+                    'diagnostics': diagnostics
+                }
+            )
+
+        # Motion Gate
+        amp = {
+            'elbow': float(movement.get('elbow_range',0.0)),
+            'knee': float(movement.get('knee_range',0.0)),
+            'shoulderY': float(movement.get('shoulder_y_range',0.0)),
+            'wristY': float(movement.get('wrist_y_range',0.0)),
+        }
+        motion_score = max(
+            amp['elbow']/25.0,
+            amp['knee']/25.0,
+            (amp['shoulderY']/0.05) if 0.05 else 0.0,
+            (amp['wristY']/0.05) if 0.05 else 0.0,
+        )
+        diagnostics.update({'motion_amplitude': amp, 'motion_score': round(motion_score,2)})
+        if motion_score < 1.0:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    'status':'error',
+                    'code':'INSUFFICIENT_MOTION',
+                    'message':'Insufficient motion for analysis',
+                    'tips':[ 'Perform at least one full repetition', 'Increase movement amplitude' ],
+                    'diagnostics': diagnostics
+                }
+            )
+
+        # Attach confidence for downstream/front diagnostics
+        conf = float(movement.get('confidence',0.0))
+        result.setdefault('validation', {})
+        result['validation'].update({'confidence': round(conf,2)})
+        return result
