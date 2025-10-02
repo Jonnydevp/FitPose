@@ -26,20 +26,7 @@ const AboutPage = () => (
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 mt-12 pt-8 border-t border-white/20">
-          <div className="text-center">
-            <div className="text-4xl font-bold text-purple-400 mb-2">50K+</div>
-            <div className="text-gray-300">Videos Analyzed</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-pink-400 mb-2">95%</div>
-            <div className="text-gray-300">Accuracy Rate</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-emerald-400 mb-2">24/7</div>
-            <div className="text-gray-300">Available</div>
-          </div>
-        </div>
+        {/* TODO: Add refreshed metrics section once real usage data is ready */}
       </div>
     </div>
   );
